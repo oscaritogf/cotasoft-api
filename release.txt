@@ -1,0 +1,11 @@
+docker buildx build --platform linux/amd64 -t contasoft-api-dev:latest . --load
+docker run -d -p 8000:8000 --name my-fastapi-container --env-file .env contasoft-api-dev:latest
+
+az login
+az acr login --name acrcontasoftdev
+
+docker tag contasoft-api-dev:latest acrcontasoftdev.azurecr.io/contasoft-api-dev:latest
+docker tag contasoft-api-dev:latest acrcontasoftdev.azurecr.io/contasoft-api-dev:0.1.15
+
+docker push acrcontasoftdev.azurecr.io/contasoft-api-dev:latest
+docker push acrcontasoftdev.azurecr.io/contasoft-api-dev:0.1.15
