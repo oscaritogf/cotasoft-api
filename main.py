@@ -57,12 +57,12 @@ async def entregaTarde(responce: Response):
 
 
 
-@app.get('/categorias/nombre')
+@app.get('/categorias')
 async def categorias(responce: Response):
     responce.headers["Cache-Control"] = "no-store"
     return await fetch_categorias()
 
-@app.get('/proveedores/nombre')
+@app.get('/proveedores')
 async def proveedores(responce: Response):
     responce.headers["Cache-Control"] = "no-store"
     return await fetch_proveedores()

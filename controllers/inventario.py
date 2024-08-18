@@ -113,7 +113,7 @@ async def fetch_inventario(id_inventario: int):
         raise HTTPException(status_code=500, detail=str(e))
 
     if len(result_dict) == 0:
-            raise HTTPException(status_code=404, detail="Card not found")
+            raise HTTPException(status_code=404, detail="not found")
 
     return result_dict[0]
 
@@ -160,6 +160,7 @@ async def fetch_update_inventario(id_inventario: int, inventario_data: dict):
         if result['rows_affected'] == 0:
             raise HTTPException(status_code=404, detail="No se encontró el inventario o no se realizaron cambios")
         
+        logger.info(f"Inventario actualizado exitosamente: {result['rows_affected']} fila(s) afectada(s)")
         return {"message": result['message'], "rows_affected": result['rows_affected']}
 
     except json.JSONDecodeError as e:
@@ -172,6 +173,13 @@ async def fetch_update_inventario(id_inventario: int, inventario_data: dict):
         logger.error(f"Error al actualizar el inventario: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
     
+
+
+
+
+
+
+
 async def fetch_create_inventario(inventario_data: dict):
     query = """
     EXEC contasoft.create_inventario
