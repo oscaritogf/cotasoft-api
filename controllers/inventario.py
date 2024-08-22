@@ -152,7 +152,7 @@ async def fetch_update_inventario(id_inventario: int, inventario_data: dict):
         if not result or len(result) == 0:
             raise HTTPException(status_code=500, detail="No se recibió respuesta de la base de datos")
         
-        result = result[0]  # Asumiendo que el procedimiento devuelve una fila
+        result = result[0] 
         
         if result['status'] != 200:
             raise HTTPException(status_code=result['status'], detail=result['message'])
@@ -209,4 +209,47 @@ async def fetch_create_inventario(inventario_data: dict):
         logger.error(f"Error al crear el inventario: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
+
+
+async def fetch_archive_inventario(id_inventario: int):
+    query = f"EXEC contasoft.archivar_inventario @id_inventario = {id_inventario}"
     
+    try:
+        logger.info(f"Archivando el inventario con id: {id_inventario}")
+        result_json = await fetch_query_as_json(query)
+        result = json.loads(result_json)
+
+        # Verifica el 'rowcount' para determinar el éxito de la operación porque me estaba dando error 500
+        if result[0]['rowcount'] > 0:
+            return {"message": "Elemento archivado exitosamente."}
+        else:
+            raise HTTPException(status_code=404, detail="El elemento no existe en el inventario.")
+    except Exception as e:
+        logger.error(f"Error al archivar el inventario: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al archivar el inventario: {str(e)}")
+
+async def fetch_create_prestamo(id_inventario: int, prestamo_data: dict):
+    query = """
+    EXEC contasoft.insertar_prestamo
+        @id_inventario = ?,
+        @id_usuario = ?,
+        @cantidad = ?,
+        @fecha_devolucion = ?
+    """
+    
+    params = (
+        id_inventario,
+        prestamo_data['id_usuario'],
+        prestamo_data['cantidad'],
+        prestamo_data['fecha_devolucion']
+    )
+    
+    try:
+        logger.info("Creando un nuevo préstamo en el inventario")
+        result = await fetch_query_as_json(query, params=params, is_procedure=True)
+        result_dict = json.loads(result)[0]
+        return {"message":"Prestamo creado exitosamen", "id":result_dict.get("id")}
+    except Exception as e:
+        logger.error(f"Error al crear el préstamo: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+       

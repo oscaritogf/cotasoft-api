@@ -10,12 +10,18 @@ from typing import Optional
 from utils.globalf import validate_sql_injection
 
 class UserRegister(BaseModel):
+    id_rol: int
+    universidad_id: int
+    primer_nombre: str
+    segundo_nombre: Optional[str]
+    primer_apellido: str
+    segundo_apellido: Optional[str]
     email: str
+    telefono: Optional[str]
     password: str
-    name:Optional[str]
+   
     
   
-
 
     @validator('password')
     def password_validation(cls, value):
@@ -33,10 +39,9 @@ class UserRegister(BaseModel):
 
         return value
 
-    @validator('name')
-    def name_validation(cls, value):
-        if validate_sql_injection(value):
-            raise ValueError('Invalid name')
+    @validator('email')
+    def email_validation(cls, value):
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
+            raise ValueError('Invalid email address')
 
         return value
-

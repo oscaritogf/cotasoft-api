@@ -28,9 +28,9 @@ load_dotenv()
 cred = credentials.Certificate("secrets/admin-firebasesdk.json")
 firebase_admin.initialize_app(cred)
 
+
 async def register_user_firebase(user: UserRegister):
     try:
-        # Crear usuario en Firebase Authentication
         user_record = firebase_auth.create_user(
             email=user.email,
             password=user.password
@@ -40,10 +40,15 @@ async def register_user_firebase(user: UserRegister):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "EXEC contasoft.create_users @username = ?, @name = ?, @email = ?",
-                user_record.uid,
-                user.name,
-                user.email
+                "EXEC contasoft.insertar_usuario @id_rol = ?, @universidad_id = ?, @primer_nombre = ?, @segundo_nombre = ?, @primer_apellido = ?, @segundo_apellido = ?, @email = ?, @telefono = ?",
+                user.id_rol,
+                user.universidad_id,
+                user.primer_nombre,
+                user.segundo_nombre,
+                user.primer_apellido,
+                user.segundo_apellido,
+                user.email,
+                user.telefono
             )
             conn.commit()
             return {
@@ -63,16 +68,14 @@ async def register_user_firebase(user: UserRegister):
             status_code=400,
             detail=f"Error al registrar usuario: {e}"
         )
-    
-
 
 
 async def login_user_firebase(user: UserLogin):
     try:
-        # Autenticar usuario con Firebase Authentication usando la API REST
+       
         logger.info(f"Iniciando proceso de login para el usuario: {user.email}")
        
-        api_key = os.getenv("FIREBASE_API_KEY")  # Reemplaza esto con tu apiKey de Firebase
+        api_key = os.getenv("FIREBASE_API_KEY") 
         url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
         payload = {
             "email": user.email,
@@ -88,7 +91,12 @@ async def login_user_firebase(user: UserLogin):
                 detail=f"Error al autenticar usuario: {response_data['error']['message']}"
             )
 
-        query = f"SELECT active FROM contasoft.users WHERE email = '{user.email}'"
+        query = f"""SELECT 
+                        email, 
+                        primer_nombre,
+                        primer_apellido,
+                        active 
+                        FROM contasoft.Usuarios WHERE email = '{user.email}'"""
         try:
             logger.info(f"QUERY LIST")
             result_json = await fetch_query_as_json(query)
@@ -96,6 +104,8 @@ async def login_user_firebase(user: UserLogin):
             return {
                 "message": "Usuario autenticado exitosamente",
                 "idToken": create_jwt_token(
+                    result_dict[0]["primer_nombre"],
+                    result_dict[0]["primer_apellido"],
                     user.email,
                     result_dict[0]["active"]
                 )

@@ -24,10 +24,11 @@ def generate_pkce_challenge(verifier):
     return base64.urlsafe_b64encode(digest).rstrip(b'=').decode('ascii')
 
 # Función para crear un JWT
-def create_jwt_token(email: str, active: bool):
+def create_jwt_token(primer_nombre:str, primer_apellido:str, email: str, active: bool):
     expiration = datetime.now() + timedelta(hours=1)  # El token expira en 1 hora
     token = jwt.encode(
-        {
+        {   "primer_nombre":primer_nombre,
+            "primer_apellido":primer_apellido,
             "email": email,
             "exp": expiration,
             "active": active,
@@ -60,6 +61,8 @@ def validate(func):
             email = payload.get("email")
             expired = payload.get("exp")
             active = payload.get("active")
+            primer_nombre = payload.get("primer_nombre")
+            primer_apellido = payload.get("primer_apellido")
             if email is None or expired is None or active is None:
                 raise HTTPException(status_code=403, detail="Invalid token")
 
@@ -69,8 +72,10 @@ def validate(func):
             if not active:
                 raise HTTPException(status_code=403, detail="Inactive user")
 
-            # Inyectar el email en el objeto request
+          
             request.state.email = email
+            request.state.primer_nombre = primer_nombre
+            request.state.primer_apellido = primer_apellido
         except PyJWTError:
             raise HTTPException(status_code=403, detail="Invalid token or expired token")
 

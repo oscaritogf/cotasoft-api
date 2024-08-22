@@ -11,8 +11,8 @@ from controllers.firebase import register_user_firebase, login_user_firebase
 
 from utils.security import validate
 from models.Prueba import UserLogin
-from models.Inventario import InventarioUpdate, InventarioCreate
-from controllers.inventario import fetch_inventarios, fetch_inventario, fetch_update_inventario, fetch_inventario_count, fetch_prestamo_count, fetch_create_inventario, fetch_categorias, fetch_proveedores, fetch_entrega_tarde_count, fetch_usuario_entregas_tarde
+from models.Inventario import InventarioUpdate, InventarioCreate, InventarioPrestamo
+from controllers.inventario import fetch_inventarios, fetch_inventario, fetch_update_inventario, fetch_inventario_count, fetch_prestamo_count, fetch_create_inventario, fetch_categorias, fetch_proveedores, fetch_entrega_tarde_count, fetch_usuario_entregas_tarde, fetch_archive_inventario, fetch_create_prestamo
 from fastapi.middleware.cors import CORSMiddleware
 import json
 
@@ -78,8 +78,8 @@ async def inventario(responce: Response, id_inventario: int):
     return await fetch_inventario(id_inventario)
 
 @app.put("/inventario/{id_inventario}")
-async def inventario_update(response: Response, id_inventario: int, inventario: InventarioUpdate):
-    response.headers["Cache-Control"] = "no-store"
+async def inventario_update(responce: Response, id_inventario: int, inventario: InventarioUpdate):
+    responce.headers["Cache-Control"] = "no-cache"
     try:
         result = await fetch_update_inventario(id_inventario, inventario.dict())
         return result
@@ -89,8 +89,8 @@ async def inventario_update(response: Response, id_inventario: int, inventario: 
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/inventario")
-async def inventario_create(response: Response, inventario: InventarioCreate):
-    response.headers["Cache-Control"] = "no-store"
+async def inventario_create(responce: Response, inventario: InventarioCreate):
+    responce.headers["Cache-Control"] = "no-cache"
     try:
         result = await fetch_create_inventario(inventario.dict())
         return result
@@ -98,6 +98,26 @@ async def inventario_create(response: Response, inventario: InventarioCreate):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.put("/inventario/archivar/{id_inventario}")
+async def archivar_inventario(responce:Response, id_inventario: int):
+    responce.headers["Cache-Control"] = "no-cache"
+    return await fetch_archive_inventario(id_inventario)
+
+
+
+@app.post("/inventario/prestamo/{id_inventario}")
+async def inventario_prestamo(responce: Response, id_inventario: int, prestamo: InventarioPrestamo):
+    responce.headers["Cache-Control"] = "no-cache"
+    try:
+        result = await fetch_create_prestamo(id_inventario, prestamo.dict())
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    
 
 @app.get("/login")
 async def login():
@@ -129,6 +149,8 @@ async def login_custom(user: UserLogin):
 async def user(request: Request):
     return {
         "email": request.state.email
+        , "primer_nombre": request.state.primer_nombre
+        , "primer_apellido": request.state.primer_apellido
     }
 
 if __name__ == "__main__":
